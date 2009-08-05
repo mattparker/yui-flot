@@ -74,7 +74,8 @@ Datasource is optional, you only need it if one of your axes has its mode set to
 					tickDecimals: null, // no. of decimals, null means auto
 					tickSize: null, // number or [number, "unit"]
 					minTickSize: null, // number or [number, "unit"]
-					timeformat: null // format string to use
+ 					timeformat: null, // format string to use
+					categories: []
 				},
 				yaxis: {
 					label: null,
@@ -190,6 +191,38 @@ Datasource is optional, you only need it if one of your axes has its mode set to
 		function normalizeData(d) {
 			var possible_controls = ['x', 'time', 'date'];
 
+
+      // is it a YUI DataSource (rudimentary check):
+      if( typeof d == 'object' ) {
+			   var ds;
+				 if( d.toString().substring( 0, 10) == 'DataSource' ) {
+			     ds = d;
+			   }
+			   else if( d.data !== undefined && d.data.toString().substring( 0, 10) == 'DataSource' ) {
+			     ds = d.data;
+			   }
+      
+         if( ds !== undefined ){
+           // get the data:
+           ds.sendRequest( ds, { success: function( oRequest , oParsedResponse ) {
+
+                                         var newdata = [];
+                                         for( var r in oParsedResponse.results ) {
+                                             if( L.isArray( oParsedResponse.results[r] ) ) {
+                                                 newdata.push( oParsedResponse.results[r] );
+                                             }
+                                             else if( typeof oParsedResponse.results[r] == 'object' ) {
+                                                 newdata.push( [ oParsedResponse.results[r].x , oParsedResponse.results[r].y ] );
+                                             }
+                                         }
+                                         d.data = newdata;
+                                      } 
+											     } 
+											 );
+				}
+      }
+
+
 			if (L.isArray(d)) {
 				d = { data: d };
 			} else {
@@ -215,8 +248,29 @@ Datasource is optional, you only need it if one of your axes has its mode set to
 						var x = d.data[j][0];
 						var y = d.data[j][1];
 
-						if(L.isObject(x) && x.getTime) x = x.getTime()/1000;
-						else x = parseFloat(x);
+						if(L.isObject(x) && x.getTime) {
+						  x = x.getTime()/1000;
+						}
+						else if( typeof x == 'string' && options.xaxis.mode == 'categorical' ){
+              var foundCat = false;
+              for( var catNum = 0; catNum < options.xaxis.categories.length; catNum++ ) {
+                 if( x == options.xaxis.categories[ catNum ] ) {
+                   x = catNum;
+                   foundCat = true;
+                   break;
+                 }
+              }
+              
+							if( !foundCat ) {
+							  options.xaxis.categories.push( x );
+                x = options.xaxis.categories.length - 1;
+              }
+    				}
+						else {
+						  x = parseFloat(x);
+						}
+
+
 
 						if(L.isObject(y) && y.getTime) y = y.getTime()/1000;
 						else y = parseFloat(y);
@@ -846,6 +900,29 @@ Datasource is optional, you only need it if one of your axes has its mode set to
 					return YAHOO.util.Date.format(d, {format: fmt}, axisOptions.timelang);
 				};
 			}
+			else if( axisOptions.mode == 'categorical' ) {
+
+        // give a little space either side:
+
+        axis.max++;
+        axis.min--;
+
+				generator = function (axis) {
+					var ticks = [];
+
+          for( var v = 0; v < axisOptions.categories.length ; v++ ) {
+            ticks.push( { v: v, label: axis.tickFormatter( v , axis ) } );
+          }
+
+					return ticks;
+				};
+
+        // formatter gets the categories: 
+			  formatter = function( v , axis ) {
+					return  axisOptions.categories[ v ];
+			  };
+			
+			}			
 			else {
 				// pretty rounding of base-10 numbers
 				var maxDec = axisOptions.tickDecimals;
@@ -1063,7 +1140,7 @@ Datasource is optional, you only need it if one of your axes has its mode set to
 		function draw() {
 			drawGrid();
 			for (var i = 0; i < series.length; i++) {
-				drawSeries(series[i]);
+				drawSeries(series[i] , i);
 			}
 		}
 
@@ -1271,13 +1348,20 @@ Datasource is optional, you only need it if one of your axes has its mode set to
 			target.appendChild(DOM.createElementFromMarkup(html.join("")));
 		}
 
-		function drawSeries(series) {
-			if (series.lines.show)
-				drawSeriesLines(series);
-			if (series.bars.show)
-				drawSeriesBars(series);
-			if (series.points.show)
-				drawSeriesPoints(series);
+		function drawSeries(seriesData , seriesNum ) {
+			if (seriesData.lines.show) {
+				drawSeriesLines(seriesData);
+			}
+			if (seriesData.bars.show) {
+				if( seriesData.bars.stacked === undefined || seriesData.bars.stacked == false ){
+				  seriesData.bars.barWidth = seriesData.bars.barWidth / series.length;
+				  seriesData.bars.barOffset = seriesNum;
+				  drawSeriesBars(seriesData);
+				}
+		  }
+			if (seriesData.points.show) {
+				drawSeriesPoints(seriesData);
+			}
 		}
 
 		function drawSeriesLines(series) {
@@ -1662,7 +1746,7 @@ Datasource is optional, you only need it if one of your axes has its mode set to
 			}
 		}
 
-		function drawSeriesBars(series) {
+		function drawSeriesBars(seriesData) {
 			function plotBars(data, barLeft, barRight, offset, fill, axisx, axisy) {
 
 				for (var i = 0; i < data.length; i++) {
@@ -1676,11 +1760,13 @@ Datasource is optional, you only need it if one of your axes has its mode set to
 			ctx.translate(plotOffset.left, plotOffset.top);
 
 			// FIXME: figure out a way to add shadows (for instance along the right edge)
-			ctx.lineWidth = series.bars.lineWidth;
-			ctx.strokeStyle = series.color;
-			var barLeft = series.bars.align == "left" ? 0 : -series.bars.barWidth/2;
-			var fill = series.bars.fill ? function (bottom, top) { return getFillStyle(series.bars, series.color, bottom, top); } : null;
-			plotBars(series.data, barLeft, barLeft + series.bars.barWidth, 0, fill, series.xaxis, series.yaxis);
+			ctx.lineWidth = seriesData.bars.lineWidth;
+			ctx.strokeStyle = seriesData.color;
+			var barLeft = seriesData.bars.align == "left" ? 0 : - (seriesData.bars.barWidth * series.length )/2;
+			barLeft = barLeft + seriesData.bars.barOffset * seriesData.bars.barWidth;
+			
+			var fill = seriesData.bars.fill ? function (bottom, top) { return getFillStyle(seriesData.bars, seriesData.color, bottom, top); } : null;
+			plotBars(seriesData.data, barLeft, barLeft + seriesData.bars.barWidth, 0, fill, seriesData.xaxis, seriesData.yaxis);
 			ctx.restore();
 		}
 
