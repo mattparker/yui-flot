@@ -517,7 +517,8 @@ Datasource is optional, you only need it if one of your axes has its mode set to
 					var delta = s.bars.align == "left" ? 0 : -s.bars.barWidth/2;
 					xmin += delta;
 					xmax += delta + s.bars.barWidth;
-					axisx.numBarSeries ++;
+					if( axisx.numBarSeries === undefined ){ axisx.numBarSeries = 0;}
+					axisx.numBarSeries++;
 				}
 
 				for (var j = 0; j < data.length; ++j) {
