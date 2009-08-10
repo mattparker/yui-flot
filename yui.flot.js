@@ -75,7 +75,8 @@ Datasource is optional, you only need it if one of your axes has its mode set to
 					tickSize: null, // number or [number, "unit"]
 					minTickSize: null, // number or [number, "unit"]
  					timeformat: null, // format string to use
-					categories: []
+					categories: [],    // holds categories for categorical mode
+					numBarSeries: 0  // we count the number of bar series, so we can work out how wide to make them.
 				},
 				yaxis: {
 					label: null,
@@ -190,38 +191,6 @@ Datasource is optional, you only need it if one of your axes has its mode set to
 
 		function normalizeData(d) {
 			var possible_controls = ['x', 'time', 'date'];
-
-
-      // is it a YUI DataSource (rudimentary check):
-      if( typeof d == 'object' ) {
-			   var ds;
-				 if( d.toString().substring( 0, 10) == 'DataSource' ) {
-			     ds = d;
-			   }
-			   else if( d.data !== undefined && d.data.toString().substring( 0, 10) == 'DataSource' ) {
-			     ds = d.data;
-			   }
-      
-         if( ds !== undefined ){
-           // get the data:
-           ds.sendRequest( ds, { success: function( oRequest , oParsedResponse ) {
-
-                                         var newdata = [];
-                                         for( var r in oParsedResponse.results ) {
-                                             if( L.isArray( oParsedResponse.results[r] ) ) {
-                                                 newdata.push( oParsedResponse.results[r] );
-                                             }
-                                             else if( typeof oParsedResponse.results[r] == 'object' ) {
-                                                 newdata.push( [ oParsedResponse.results[r].x , oParsedResponse.results[r].y ] );
-                                             }
-                                         }
-                                         d.data = newdata;
-                                      } 
-											     } 
-											 );
-				}
-      }
-
 
 			if (L.isArray(d)) {
 				d = { data: d };
@@ -548,6 +517,7 @@ Datasource is optional, you only need it if one of your axes has its mode set to
 					var delta = s.bars.align == "left" ? 0 : -s.bars.barWidth/2;
 					xmin += delta;
 					xmax += delta + s.bars.barWidth;
+					axisx.numBarSeries ++;
 				}
 
 				for (var j = 0; j < data.length; ++j) {
@@ -1353,8 +1323,8 @@ Datasource is optional, you only need it if one of your axes has its mode set to
 				drawSeriesLines(seriesData);
 			}
 			if (seriesData.bars.show) {
-				if( seriesData.bars.stacked === undefined || seriesData.bars.stacked == false ){
-				  seriesData.bars.barWidth = seriesData.bars.barWidth / series.length;
+				if( seriesData.bars.stacked === undefined || seriesData.bars.stacked === false ){
+				  seriesData.bars.barWidth = seriesData.bars.barWidth / ( seriesData.xaxis.numBarSeries > 0 ? seriesData.xaxis.numBarSeries : 1 );
 				  seriesData.bars.barOffset = seriesNum;
 				  drawSeriesBars(seriesData);
 				}
