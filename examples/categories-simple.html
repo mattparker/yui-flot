@@ -19,8 +19,8 @@
        plot function with the data. The axes are automatically
        scaled.</p>
       
-    <p>This has categories, not points as data.  The only difference is having the mode="categorical" on the x-axis
-       config.</p>
+    <p>This has categories, not points as data.  The only difference is 
+		   having the mode="categorical" on the x-axis config.</p>
 
 <script id="source" language="javascript" type="text/javascript">
 $(function () {
@@ -31,7 +31,7 @@ $(function () {
     // a null signifies separate line segments
     var d3 = [[ "apple", 12], ["banana", 12], null, ["tomato", 2.5], ["apricot", 2.5]];
     
-    $.plot($("#placeholder"), [ d2, d3 ]);
+    $.plot($("#placeholder"), [ d2, d3 ] , { xaxis: {mode: "categorical" } });
 });
 </script>
 
