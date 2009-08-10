@@ -1733,11 +1733,13 @@ Datasource is optional, you only need it if one of your axes has its mode set to
 			// FIXME: figure out a way to add shadows (for instance along the right edge)
 			ctx.lineWidth = seriesData.bars.lineWidth;
 			ctx.strokeStyle = seriesData.color;
-			var barLeft = seriesData.bars.align == "left" ? 0 : - (seriesData.bars.barWidth * series.length )/2;
-			barLeft = barLeft + seriesData.bars.barOffset * seriesData.bars.barWidth;
+
+			var barLeft = seriesData.bars.align == "left" ?  - (seriesData.bars.barWidth * series.length )/2 : 0;
+			barLeft = barLeft + ( seriesData.bars.barOffset * seriesData.bars.barWidth ) 
+			                  + ( seriesData.bars.lineWidth / seriesData.xaxis.scale );
 			
 			var fill = seriesData.bars.fill ? function (bottom, top) { return getFillStyle(seriesData.bars, seriesData.color, bottom, top); } : null;
-			plotBars(seriesData.data, barLeft, barLeft + seriesData.bars.barWidth, 0, fill, seriesData.xaxis, seriesData.yaxis);
+			plotBars(seriesData.data, barLeft, barLeft + seriesData.bars.barWidth - ( seriesData.bars.lineWidth / seriesData.xaxis.scale), 0, fill, seriesData.xaxis, seriesData.yaxis);
 			ctx.restore();
 		}
 
