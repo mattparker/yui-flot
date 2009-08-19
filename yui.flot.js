@@ -1110,8 +1110,15 @@ Datasource is optional, you only need it if one of your axes has its mode set to
 
 		function draw() {
 			drawGrid();
+			
+			var barNum = 0;
 			for (var i = 0; i < series.length; i++) {
-				drawSeries(series[i] , i);
+
+				drawSeries(series[i] , barNum);
+
+			  if( series[i].bars.show ) {
+			    barNum ++;
+			  }
 			}
 		}
 
@@ -1734,7 +1741,8 @@ Datasource is optional, you only need it if one of your axes has its mode set to
 			ctx.lineWidth = seriesData.bars.lineWidth;
 			ctx.strokeStyle = seriesData.color;
 
-			var barLeft = seriesData.bars.align == "left" ?  - (seriesData.bars.barWidth * series.length )/2 : 0;
+			var barLeft = seriesData.bars.align == "left" ?  - (seriesData.bars.barWidth * seriesData.xaxis.numBarSeries )/2 : 0;
+
 			barLeft = barLeft + ( seriesData.bars.barOffset * seriesData.bars.barWidth ) 
 			                  + ( seriesData.bars.lineWidth / seriesData.xaxis.scale );
 			
