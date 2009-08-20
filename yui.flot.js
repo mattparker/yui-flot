@@ -1907,8 +1907,11 @@ Datasource is optional, you only need it if one of your axes has its mode set to
 				}
 
 				if (s.bars.show && !item) { // no other point can be nearby
-					var barLeft = s.bars.align == "left" ? 0 : -s.bars.barWidth/2,
-						barRight = barLeft + s.bars.barWidth;
+			      var barLeft = s.bars.align == "left" ?  - (s.bars.barWidth * s.xaxis.numBarSeries )/2 : 0;
+			          barLeft = barLeft + ( s.bars.barOffset * s.bars.barWidth ) 
+			                            + ( s.bars.lineWidth / s.xaxis.scale );
+		       	var	barRight = barLeft + s.bars.barWidth;
+
 
 					for (j = 0; j < data.length; j++) {
 						var x = data[j].x, y = data[j].y;
@@ -2150,7 +2153,9 @@ Datasource is optional, you only need it if one of your axes has its mode set to
 			octx.lineWidth = series.bars.lineWidth;
 			octx.strokeStyle = parseColor(series.color).scale(1, 1, 1, 0.5).toString();
 			var fillStyle = parseColor(series.color).scale(1, 1, 1, 0.5).toString();
-			var barLeft = series.bars.align == "left" ? 0 : -series.bars.barWidth/2;
+			var barLeft = series.bars.align == "left" ?  - (series.bars.barWidth * series.xaxis.numBarSeries )/2 : 0;
+			    barLeft = barLeft + ( series.bars.barOffset * series.bars.barWidth ) 
+			                      + ( series.bars.lineWidth / series.xaxis.scale );
 			drawBar(point.x, point.y, barLeft, barLeft + series.bars.barWidth,
 					0, function () { return fillStyle; }, series.xaxis, series.yaxis, octx);
 		}
