@@ -76,11 +76,13 @@ Datasource is optional, you only need it if one of your axes has its mode set to
 					minTickSize: null, // number or [number, "unit"]
  					timeformat: null, // format string to use
 					categories: [],    // holds categories for categorical mode
-					numBarSeries: 0  // we count the number of bar series, so we can work out how wide to make them.
+					numBarSeries: 0,  // we count the number of bar series, so we can work out how wide to make them.
+					title: ''       // title for the whole axis
 				},
 				yaxis: {
 					label: null,
-					autoscaleMargin: 0.02
+					autoscaleMargin: 0.02,
+					title: ''
 				},
 				x2axis: {
 					label: null,
@@ -964,6 +966,9 @@ Datasource is optional, you only need it if one of your axes has its mode set to
 				axis.labelWidth = axisOptions.labelWidth;
 			if (axisOptions.labelHeight != null)
 				axis.labelHeight = axisOptions.labelHeight;
+			if (axisOptions.title != null) {
+				axis.title = axisOptions.title;
+			}
 		}
 
 		function setTicks(axis, axisOptions) {
@@ -1308,11 +1313,22 @@ Datasource is optional, you only need it if one of your axes has its mode set to
 				return '<div style="position:absolute;top:' + (plotOffset.top + plotHeight + margin) + 'px;left:' + Math.round(plotOffset.left + axis.p2c(tick.v) - axis.labelWidth/2) + 'px;width:' + axis.labelWidth + 'px;text-align:center" class="tickLabel">' + tick.label + "</div>";
 			});
 
-
+      if( axes.xaxis.title ) {
+			  addLabels(axes.xaxis, function (tick, axis) {
+				  return '<div style="position:absolute;top:' + (plotOffset.top + plotHeight + margin + 10) + 'px;width:' + plotWidth + 'px;text-align:center" class="axisTitle">' + axis.title + "</div>";
+			  });
+			}		
+			
 			addLabels(axes.yaxis, function (tick, axis) {
 				return '<div style="position:absolute;top:' + Math.round(plotOffset.top + axis.p2c(tick.v) - axis.labelHeight/2) + 'px;right:' + (plotOffset.right + plotWidth + margin) + 'px;width:' + axis.labelWidth + 'px;text-align:right" class="tickLabel">' + tick.label + "</div>";
 			});
-
+			
+      if( axes.yaxis.title ) {
+			  addLabels(axes.yaxis, function (tick, axis) {
+				  return '<div style="position:absolute;top:' + ( -10) + 'px;width:40px;text-align:center" class="axisTitle">' + axis.title + "</div>";
+			  });
+			}	
+			
 			addLabels(axes.x2axis, function (tick, axis) {
 				return '<div style="position:absolute;bottom:' + (plotOffset.bottom + plotHeight + margin) + 'px;left:' + Math.round(plotOffset.left + axis.p2c(tick.v) - axis.labelWidth/2) + 'px;width:' + axis.labelWidth + 'px;text-align:center" class="tickLabel">' + tick.label + "</div>";
 			});
